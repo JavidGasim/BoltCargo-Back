@@ -100,6 +100,35 @@ namespace BoltCargo.WebUI.Controllers
             return BadRequest(new { Status = "Error", Message = "User creation failed!", Error = result.Errors });
         }
 
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            var user = await _userManager.FindByNameAsync(dto.Username);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User not found" });
+            }
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, dto.NewPassword);
+            if (result.Succeeded)
+            {
+                return Ok(new { Message = "Password reset successful" });
+            }
+            return BadRequest(new { Message = "Password reset failed", Errors = result.Errors });
+        }
+
+        [HttpGet("getByUserName")]
+        public async Task<IActionResult> GetByUserName([FromQuery] string username)
+        {
+            var user = await _customIdentityUserService.GetByUsernameAsync(username);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User not found" });
+            }
+            var userDto = _mapper.Map<UserDto>(user);
+            return Ok(userDto);
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
